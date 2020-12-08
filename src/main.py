@@ -1,19 +1,27 @@
+import os
+import tarfile
+import wget
+
+from pycocotools.coco import COCO
+import requests
+
+def download_dataset(path='./input/coco_person'):
+    if not os.path.exists(path):
+        os.mkdir(path)
+        # instantiate COCO specifying the annotations json path
+        coco = COCO('./input/annotations/person_keypoints_train2017.json')
+        # Specify a list of category names of interest
+        catIds = coco.getCatIds(catNms=['person'])
+        # Get the corresponding image ids and images using loadImgs
+        imgIds = coco.getImgIds(catIds=catIds)
+        images = coco.loadImgs(imgIds)
+
+        # Save the images into a local folder
+        for im in images:
+            img_data = requests.get(im['coco_url']).content
+            with open(os.path.join(path, im['file_name']), 'wb') as handler:
+                handler.write(img_data)
+
 
 if __name__ == '__main__':
-
-    import os
-    import tarfile
-    import wget
-    if not os.path.exists("17flowers.tgz"):
-        print("Downloading flower dataset")
-        wget.download(r'https://www.robots.ox.ac.uk/~vgg/data/flowers/17/17flowers.tgz')
-        my_tar = tarfile.open('17flowers.tgz')
-        my_tar.extractall('.')
-        my_tar.close()
-    if not os.path.exists("trimaps.tgz"):
-        wget.download(r'https://www.robots.ox.ac.uk/~vgg/data/flowers/17/trimaps.tgz')
-        my_tar = tarfile.open('trimaps.tgz')
-        my_tar.extractall('.')
-        my_tar.close()
-    if not os.path.exists("datasplits.mat"):
-        wget.download(r'https://www.robots.ox.ac.uk/~vgg/data/flowers/17/datasplits.mat')
+    download_dataset()
