@@ -109,13 +109,23 @@ class CUB(Dataset):
 
         return img, target
 
+import src.utils as utils
 def initialize_loader(train_batch_size=4, val_batch_size=4):
     train_dataset = CUB(PennFudanPath, get_transform(train=True))
     valid_dataset = CUB(PennFudanPath, get_transform(train=False))
 
     indices = torch.randperm(len(train_dataset)).tolist()
-    dataset = torch.utils.data.Subset(train_dataset, indices[:-50])
-    dataset_test = torch.utils.data.Subset(valid_dataset, indices[-50:])
+    train_dataset = torch.utils.data.Subset(train_dataset, indices[:-50])
+    valid_dataset = torch.utils.data.Subset(valid_dataset, indices[-50:])
+
+    # define training and validation data loaders
+    train_data_loader = torch.utils.data.DataLoader(
+        train_dataset, batch_size=4, shuffle=True, num_workers=0,
+        collate_fn=utils.collate_fn)
+
+    data_loader_test = torch.utils.data.DataLoader(
+        valid_dataset, batch_size=1, shuffle=False, num_workers=0,
+        collate_fn=utils.collate_fn)
 
     return
 
