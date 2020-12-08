@@ -123,11 +123,11 @@ def initialize_loader(train_batch_size=4, val_batch_size=4):
         train_dataset, batch_size=4, shuffle=True, num_workers=0,
         collate_fn=utils.collate_fn)
 
-    data_loader_test = torch.utils.data.DataLoader(
+    valid_data_loader = torch.utils.data.DataLoader(
         valid_dataset, batch_size=1, shuffle=False, num_workers=0,
         collate_fn=utils.collate_fn)
 
-    return
+    return train_data_loader, valid_data_loader
 
 def visualize_dataset(dataloader):
     return
@@ -174,12 +174,31 @@ class AttrDict(dict):
         super(AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
 
+import torchvision
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
+
+
+def get_model_instance_segmentation(num_classes):
+    # load a model pre-trained pre-trained on COCO
+    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+    print(model)
+
+    # replace the classifier with a new one, that has
+    # num_classes which is user-defined
+    num_classes = 2  # 1 class (person) + background
+    # get number of input features for the classifier
+    in_features = model.roi_heads.box_predictor.cls_score.in_features
+    # replace the pre-trained head with a new one
+    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+
+    return model
 
 if __name__ == '__main__':
     PennFudanPath = r'./input/PennFudanPed'
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
     initialize_loader()
+    get_model_instance_segmentation(2)
 
 
 
