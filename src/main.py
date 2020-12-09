@@ -112,7 +112,7 @@ class CUB(Dataset):
         return img, target
 
 import src.utils as utils
-def initialize_loader(train_batch_size=4, val_batch_size=4):
+def initialize_loader(train_batch_size=2, val_batch_size=1):
     train_dataset = CUB(PennFudanPath, get_transform(train=True))
     valid_dataset = CUB(PennFudanPath, get_transform(train=False))
 
@@ -184,7 +184,6 @@ from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 def get_model_instance_segmentation(num_classes):
     # load a model pre-trained pre-trained on COCO
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
-    print(model)
 
     # replace the classifier with a new one, that has
     # num_classes which is user-defined
@@ -198,7 +197,7 @@ def get_model_instance_segmentation(num_classes):
 if __name__ == '__main__':
     PennFudanPath = r'./input/PennFudanPed'
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    train_data_loader, valid_data_loader=initialize_loader()
+    train_data_loader, valid_data_loader = initialize_loader()
     model = get_model_instance_segmentation(2)
     # move model to the right device
     model.to(device)
