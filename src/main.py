@@ -17,6 +17,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import src.transforms as T
+from src.engine import train_one_epoch, evaluate
+
 
 
 def download_dataset(path='./input/coco_person'):
@@ -186,7 +188,6 @@ def get_model_instance_segmentation(num_classes):
 
     # replace the classifier with a new one, that has
     # num_classes which is user-defined
-    num_classes = 2  # 1 class (person) + background
     # get number of input features for the classifier
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     # replace the pre-trained head with a new one
@@ -197,8 +198,32 @@ def get_model_instance_segmentation(num_classes):
 if __name__ == '__main__':
     PennFudanPath = r'./input/PennFudanPed'
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    initialize_loader()
-    get_model_instance_segmentation(2)
+    train_data_loader, valid_data_loader=initialize_loader()
+    model = get_model_instance_segmentation(2)
+    # move model to the right device
+    model.to(device)
+
+    # construct an optimizer
+    params = [p for p in model.parameters() if p.requires_grad]
+    optimizer = torch.optim.SGD(params, lr=0.005,
+                                momentum=0.9, weight_decay=0.0005)
+    # and a learning rate scheduler
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
+                                                   step_size=3,
+                                                   gamma=0.1)
+
+    # let's train it for 10 epochs
+    num_epochs = 10
+
+    for epoch in range(num_epochs):
+        # train for one epoch, printing every 10 iterations
+        train_one_epoch(model, optimizer, train_data_loader, device, epoch, print_freq=10)
+        # update the learning rate
+        lr_scheduler.step()
+        # evaluate on the test dataset
+        evaluate(model, valid_data_loader, device=device)
+
+    print("That's it!")
 
 
 
